@@ -8,15 +8,12 @@ export const metadata: Metadata = {
   title: "Order Details",
 };
 
-interface Params {
-  params: { id: string };
-}
-
-const OrderDetailsPage = async ({ params }: Params) => {
+const OrderDetailsPage = async ({ params }: { params: { id: string } }) => {
   const { id } = params;
 
   const rawOrder = await getOrderById(id);
   if (!rawOrder) notFound();
+
   const order = {
     ...rawOrder,
     User: rawOrder.user,
@@ -46,7 +43,7 @@ const OrderDetailsPage = async ({ params }: Params) => {
           createdAt: order.createdAt,
           paymentMethod: order.paymentMethod,
         }}
-        paypalClientId={process.env.PAYPAL_CLIENT_ID || "sb"}
+        paypalClientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "sb"}
       />
     </div>
   );
