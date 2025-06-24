@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import { getOrderById } from "@/lib/actions/order.actions";
 import { notFound } from "next/navigation";
+import { getOrderById } from "@/lib/actions/order.actions";
 import { shippingAddress } from "@/types";
 import OrderDetailsTable from "./order-details-table";
 
@@ -11,11 +11,8 @@ export const metadata: Metadata = {
 const OrderDetailsPage = async ({ params }: { params: { id: string } }) => {
   const { id } = params;
 
-  console.log("🛒 Order ID received:", id);
-
   const rawOrder = await getOrderById(id);
   if (!rawOrder) notFound();
-  console.log("✅ Raw order object:", rawOrder);
 
   const order = {
     ...rawOrder,
@@ -24,12 +21,7 @@ const OrderDetailsPage = async ({ params }: { params: { id: string } }) => {
       ...item,
       price: Number(item.price),
     })),
-    itemsPrice: Number(rawOrder.itemsPrice),
-    shippingPrice: Number(rawOrder.shippingPrice),
-    taxPrice: Number(rawOrder.taxPrice),
-    totalPrice: Number(rawOrder.totalPrice),
   };
-  console.log("PayPal Client ID", process.env.PAYPAL_CLIENT_ID);
 
   return (
     <OrderDetailsTable
@@ -50,7 +42,7 @@ const OrderDetailsPage = async ({ params }: { params: { id: string } }) => {
         createdAt: order.createdAt,
         paymentMethod: order.paymentMethod,
       }}
-      paypalClientId={process.env.PAYPAL_CLIENT_ID || "sb"}
+      paypalClientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "sb"}
     />
   );
 };
