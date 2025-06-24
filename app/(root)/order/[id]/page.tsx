@@ -10,7 +10,6 @@ export const metadata: Metadata = {
 
 const OrderDetailsPage = async ({ params }: { params: { id: string } }) => {
   const { id } = params;
-
   const rawOrder = await getOrderById(id);
   if (!rawOrder) notFound();
 
