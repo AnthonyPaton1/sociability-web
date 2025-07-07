@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTransition } from "react";
 import { addItemToCart, removeItemFromCart } from "@/lib/actions/cart.actions";
-import { ArrowRight, Loader, Minus, Plus } from "lucide-react";
+import { ArrowRight, ArrowLeft, Loader, Minus, Plus } from "lucide-react";
 import { Cart } from "@/types";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,7 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { start } from "repl";
 
 const CartTable = ({ cart }: { cart?: Cart }) => {
   const router = useRouter();
@@ -27,8 +26,14 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
     <>
       <h1 className=" py-4 h2-bold">Shopping Cart</h1>
       {!cart || cart.items.length === 0 ? (
-        <div>
-          Cart is empty. <Link href="/">Go Shopping</Link>{" "}
+        <div className="flex items-center gap-2">
+          <ArrowLeft className="w-4 h-4" />
+          <span>
+            Cart is empty.{" "}
+            <Link href="/" className="text-blue-600 underline">
+              Go Shopping
+            </Link>
+          </span>
         </div>
       ) : (
         <div className="grid md:grid-cols-4 md:gap-5">

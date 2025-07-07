@@ -44,12 +44,12 @@ export const paypal = {
 
 //generate paypal access token
 async function generateAccessToken() {
-  const { PAYPAL_CLIENT_ID, PAYPAL_APP_SECRET } = process.env;
-  const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_APP_SECRET}`).toString(
-    "base64"
-  );
+  const { NEXT_PUBLIC_PAYPAL_CLIENT_ID, PAYPAL_APP_SECRET } = process.env;
+  const auth = Buffer.from(
+    `${NEXT_PUBLIC_PAYPAL_CLIENT_ID}:${PAYPAL_APP_SECRET}`
+  ).toString("base64");
 
-  if (!PAYPAL_CLIENT_ID || !PAYPAL_APP_SECRET) {
+  if (!NEXT_PUBLIC_PAYPAL_CLIENT_ID || !PAYPAL_APP_SECRET) {
     throw new Error(
       "Missing PayPal client ID or secret in environment variables"
     );

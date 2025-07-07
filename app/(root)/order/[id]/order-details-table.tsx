@@ -59,8 +59,11 @@ const OrderDetailsTable = ({
   };
 
   const handleCreatePayPalOrder = async () => {
-    console.log("💰 Creating PayPal order...");
+    console.log("🛠 Creating PayPal order...");
+
     const res = await createPayPalOrder(order.id);
+
+    console.log("✅ PayPal order response:", res);
 
     if (!res.success) {
       toast.error(res.message);
@@ -68,7 +71,7 @@ const OrderDetailsTable = ({
     }
 
     toast.success("PayPal order created");
-    return res.data;
+    return res.data; // Must be the PayPal order ID string
   };
 
   const handleApprovePayPalOrder = async (
@@ -181,8 +184,10 @@ const OrderDetailsTable = ({
               </div>
               {/* paypal payment */}
               {!isPaid && paymentMethod === "PayPal" && (
-                <div className="min-h-[200px] border border-red-500 border-solid">
-                  <PayPalScriptProvider options={{ clientId: paypalClientId }}>
+                <div className="min-h-[200px]">
+                  <PayPalScriptProvider
+                    options={{ clientId: paypalClientId, currency: "GBP" }}
+                  >
                     <PrintLoadingState />
                     <PayPalButtons
                       createOrder={handleCreatePayPalOrder}
