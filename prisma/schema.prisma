@@ -27,6 +27,8 @@ model Product {
   banner         String?
   createdAt      DateTime    @default(now()) @db.Timestamp(6)
   orderItems     OrderItem[]
+  vendorId       String
+  vendor         Vendor      @relation(fields: [vendorId], references: [id])
 
   @@map("product")
 }
@@ -75,11 +77,12 @@ model Account {
 }
 
 model Vendor {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id])
   storeName String
-  createdAt DateTime @default(now()) @db.Timestamp(6)
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  Product   Product[]
 
   @@map("vendor")
 }

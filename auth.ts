@@ -42,14 +42,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Initial sign in
       if (user) {
         token.id = user.id;
         token.role = (user as PrismaUser).role;
         token.name = user.name ?? user.email?.split("@")[0];
       }
+
+      // Manual session update via useSession().update(...)
+      if (trigger === "update" && session?.user?.name) {
+        token.name = session.user.name;
+      }
+
       return token;
     },
+
     async session({ session, token }) {
       session.user.id = token.id as string;
       session.user.role = token.role as string;

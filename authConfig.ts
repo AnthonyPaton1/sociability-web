@@ -1,30 +1,50 @@
-// authConfig.ts
 import type { NextAuthConfig } from "next-auth";
 import { NextResponse } from "next/server";
 
 export const authConfig = {
-  providers: [], // dummy, required for type
+  providers: [],
+
   callbacks: {
     authorized({ request, auth }: any) {
-      const protectedPaths = [
-        /\/shipping-address/,
-        /\/payment-method/,
-        /\/place-order/,
-        /\/profile/,
-        /\/user\/(.*)/,
-        /\/order\/(.*)/,
-        /\/admin/,
-      ];
-
-      //get pathname from req URL object
       const { pathname } = request.nextUrl;
 
-      // Protect routes
-      if (!auth && protectedPaths.some((p) => p.test(pathname))) {
+      console.log("AUTHORIZED middleware: user =", auth?.user);
+
+      const protectedPaths = [
+        /^\/shipping-address/,
+        /^\/payment-method/,
+        /^\/place-order/,
+        /^\/profile/,
+        /^\/user\/.*/,
+        /^\/order\/.*/,
+        /^\/admin/,
+        /^\/vendors/,
+      ];
+
+      const isProtected = protectedPaths.some((p) => p.test(pathname));
+
+      // If accessing a protected route and not authenticated
+      if (isProtected && !auth?.user) return false;
+
+      // Restrict /admin routes to admins only
+      if (
+        pathname.startsWith("/admin") &&
+        auth?.user?.email !== "admin@testtest.com"
+      ) {
         return false;
       }
 
-      // Create sessionCartId cookie if missing
+      // Restrict /vendor routes to vendors and admins
+      if (
+        pathname.startsWith("/vendors") &&
+        !["admin@testtest.com", "vendor1@example.com"].includes(
+          auth?.user?.email
+        )
+      ) {
+        return false;
+      }
+
+      // Generate sessionCartId if missing
       if (!request.cookies.get("sessionCartId")) {
         const sessionCartId = crypto.randomUUID();
         const response = NextResponse.next({
