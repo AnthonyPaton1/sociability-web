@@ -1,35 +1,50 @@
 "use client";
+
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import React from "react";
-
-const links = [
-  {
-    title: "Overview",
-    href: "/vendors/overview",
-  },
-  {
-    title: "Products",
-    href: "/vendors/products",
-  },
-  {
-    title: "Orders",
-    href: "/vendors/orders",
-  },
-  {
-    title: "Users",
-    href: "/vendors/users",
-  },
-];
 
 const MainNav = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLElement>) => {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+
+  if (status === "loading") return null;
+
+  const isVendor = session?.user?.vendorId && session?.user?.role === "vendor";
+
+  const vendorId = session?.user?.vendorId;
+
+  const links = [
+    {
+      title: "Dashboard",
+      href: `/vendors/${vendorId}/dashboard`,
+    },
+    {
+      title: "Products",
+      href: `/vendors/${vendorId}/products`,
+    },
+    {
+      title: "Orders",
+      href: `/vendors/${vendorId}/orders`,
+    },
+    {
+      title: "Users",
+      href: `/vendors/${vendorId}/users`,
+    },
+  ];
+
+  if (!isVendor) return null;
+
   return (
-    <nav className={cn("flex items-center space-x-4 lg:space-x-6")} {...props}>
+    <nav
+      className={cn("flex items-center space-x-4 lg:space-x-6", className)}
+      {...props}
+    >
       {links.map((item) => (
         <Link
           key={item.href}
@@ -45,4 +60,5 @@ const MainNav = ({
     </nav>
   );
 };
+
 export default MainNav;

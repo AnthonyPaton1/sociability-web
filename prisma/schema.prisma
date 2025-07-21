@@ -27,8 +27,8 @@ model Product {
   banner         String?
   createdAt      DateTime    @default(now()) @db.Timestamp(6)
   orderItems     OrderItem[]
-  vendorId       String
-  vendor         Vendor      @relation(fields: [vendorId], references: [id])
+  vendorId       String?     @db.Uuid
+  vendor         Vendor?     @relation(fields: [vendorId], references: [id])
 
   @@map("product")
 }
@@ -47,9 +47,10 @@ model User {
   updatedAt     DateTime  @updatedAt
   account       Account[]
   session       Session[]
-  Vendor        Vendor[]
+  Vendor        Vendor?
   Cart          Cart[]    @relation("UserCart")
   Order         Order[]
+  vendorId      String?   @unique
 
   @@map("user")
 }
@@ -77,12 +78,11 @@ model Account {
 }
 
 model Vendor {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String    @db.Uuid
-  user      User      @relation(fields: [userId], references: [id])
-  storeName String
-  createdAt DateTime  @default(now()) @db.Timestamp(6)
-  Product   Product[]
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user         User      @relation(fields: [userId], references: [id])
+  userId       String    @unique @db.Uuid // ✅ Must match User.id type
+  businessName String
+  products     Product[]
 
   @@map("vendor")
 }

@@ -8,16 +8,35 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { signUpUser } from "@/lib/actions/user.actions";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { signIn } from "next-auth/react"; // ✅ this is allowed in client components
 
 const SignUpForm = () => {
-  const [data, action] = useActionState(signUpUser, {
+  const [formState, formAction] = useActionState(signUpUser, {
     success: false,
     message: "",
   });
 
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const router = useRouter();
+
+  const [formValues, setFormValues] = useState({
+    email: "",
+    password: "",
+  });
+
+  // ✅ After successful signup, call signIn
+  useEffect(() => {
+    if (formState.success) {
+      signIn("credentials", {
+        email: formValues.email,
+        password: formValues.password,
+        callbackUrl,
+      });
+    }
+  }, [formState.success]);
 
   const SignUpButton = () => {
     const { pending } = useFormStatus();
@@ -29,11 +48,20 @@ const SignUpForm = () => {
   };
 
   return (
-    <form action={action}>
+    <form
+      action={formAction}
+      onSubmit={(e) => {
+        const form = e.currentTarget;
+        const email = form.email.value;
+        const password = form.password.value;
+        setFormValues({ email, password }); // ✅ store these so we can use them in signIn()
+      }}
+    >
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
+
       <div className="space-y-6">
         <div>
-          <Label htmlFor="email">Name</Label>
+          <Label htmlFor="name">Name</Label>
           <Input
             id="name"
             name="name"
@@ -61,27 +89,32 @@ const SignUpForm = () => {
             name="password"
             type="password"
             required
-            autoComplete="password"
+            autoComplete="new-password"
             defaultValue={signUpDefaultValues.password}
           />
         </div>
         <div>
-          <Label htmlFor="confirmPassword"> ConfirmPassword</Label>
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
           <Input
             id="confirmPassword"
             name="confirmPassword"
             type="password"
             required
-            autoComplete="confirmPassword"
+            autoComplete="new-password"
             defaultValue={signUpDefaultValues.confirmPassword}
           />
         </div>
+
         <SignUpButton />
       </div>
-      {data && !data.success && (
-        <div className="text-center text-destructive">{data.message}</div>
+
+      {formState && !formState.success && (
+        <div role="alert" className="text-center text-destructive">
+          {formState.message}
+        </div>
       )}
-      <div className="text-sm text-center text-muted-foreground">
+
+      <div className="text-sm text-center text-muted-foreground mt-4">
         Already have an account?{" "}
         <Link href="/sign-in" target="_self" className="link">
           Sign In

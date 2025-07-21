@@ -1,4 +1,5 @@
-import { auth } from "@/auth";
+import { auth } from "@/auth-helpers/server";
+
 import { Metadata } from "next";
 import { getMyCart } from "@/lib/actions/cart.actions";
 import { getUserById } from "@/lib/actions/user.actions";

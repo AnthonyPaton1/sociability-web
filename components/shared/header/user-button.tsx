@@ -1,6 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { auth } from "@/auth";
-import { signOutUser } from "@/lib/actions/user.actions";
+import { useSession } from "next-auth/react";
+import { signOut } from "next-auth/react"; // if using built-in signOut
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,8 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User2Icon } from "lucide-react";
 
-const UserButton = async () => {
-  const session = await auth();
+const UserButton = () => {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return null;
+  }
+
   if (!session) {
     return (
       <Button asChild>
@@ -54,22 +61,29 @@ const UserButton = async () => {
               User Profile
             </Link>
           </DropdownMenuItem>
-
           <DropdownMenuItem>
             <Link href="/user/orders" className="w-full">
               Order History
             </Link>
           </DropdownMenuItem>
-
-          <DropdownMenuItem className="p-0 mb-1">
-            <form action={signOutUser} className="w-full">
-              <Button
-                className="w-full py-4 px-2 h-4 justify-start"
-                variant="ghost"
+          {session.user?.role === "vendor" && (
+            <DropdownMenuItem>
+              <Link
+                href={`/vendors/${session.user.vendorId}/dashboard`}
+                className="w-full"
               >
-                Sign Out
-              </Button>
-            </form>
+                Vendor section
+              </Link>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem className="p-0 mb-1">
+            <Button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="w-full py-4 px-2 h-4 justify-start"
+              variant="ghost"
+            >
+              Sign Out
+            </Button>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

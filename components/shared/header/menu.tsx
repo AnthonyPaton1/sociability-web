@@ -12,8 +12,6 @@ import {
 import UserButton from "./user-button";
 
 const Menu = () => {
-  const userButton = UserButton();
-
   return (
     <div className="flex justify-end gap-3">
       <nav className="hidden md:flex w-full max-w-xs gap-1">
@@ -23,7 +21,7 @@ const Menu = () => {
             <ShoppingCartIcon /> Cart
           </Link>
         </Button>
-        {userButton}
+        <UserButton />
       </nav>
       <nav className="md:hidden">
         <Sheet>
@@ -37,7 +35,7 @@ const Menu = () => {
                   <ShoppingCartIcon /> Cart
                 </Link>
               </Button>
-              {userButton}
+              <UserButton />
               <SheetDescription></SheetDescription>
             </SheetContent>
           </SheetTrigger>

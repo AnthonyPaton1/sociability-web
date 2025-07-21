@@ -1,7 +1,7 @@
 "use server";
 import { signUpFormSchema } from "../validators";
 import { signInFormSchema } from "../validators";
-import { signIn, signOut, auth } from "@/auth";
+import { auth } from "@/auth-helpers/server";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { hashSync } from "bcrypt-ts-edge";
 import { prisma } from "@/db/prisma";
@@ -21,7 +21,7 @@ export async function signInWithCredentials(
       email: formdata.get("email"),
       password: formdata.get("password"),
     });
-    await signIn("credentials", user);
+
     return { success: true, message: "Signed in successfully" };
   } catch (error) {
     if (isRedirectError(error)) {
@@ -30,11 +30,6 @@ export async function signInWithCredentials(
 
     return { success: false, message: "Invalid email or password" };
   }
-}
-
-//Sign user out
-export async function signOutUser() {
-  await signOut();
 }
 
 export async function signUpUser(prevState: unknown, FormData: FormData) {
@@ -47,8 +42,8 @@ export async function signUpUser(prevState: unknown, FormData: FormData) {
     });
 
     const plainPassword = user.password;
-
     user.password = hashSync(user.password, 10);
+
     await prisma.user.create({
       data: {
         name: user.name,
@@ -57,10 +52,9 @@ export async function signUpUser(prevState: unknown, FormData: FormData) {
       },
     });
 
-    await signIn("credentials", {
-      email: user.email,
-      password: plainPassword,
-    });
+    // ✅ Instead of calling signIn here (not supported server-side)
+    // Let the client redirect and call signIn
+
     return { success: true, message: "User registered successfully" };
   } catch (error) {
     if (isRedirectError(error)) {

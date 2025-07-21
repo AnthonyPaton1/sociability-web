@@ -18,6 +18,7 @@ CREATE TABLE "product" (
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "banner" TEXT,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "vendorId" UUID,
 
     CONSTRAINT "product_pkey" PRIMARY KEY ("id")
 );
@@ -35,6 +36,7 @@ CREATE TABLE "user" (
     "paymentMethod" TEXT,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "vendorId" TEXT,
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
 );
@@ -62,8 +64,7 @@ CREATE TABLE "account" (
 CREATE TABLE "vendor" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "userId" UUID NOT NULL,
-    "storeName" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "businessName" TEXT NOT NULL,
 
     CONSTRAINT "vendor_pkey" PRIMARY KEY ("id")
 );
@@ -88,11 +89,68 @@ CREATE TABLE "verificationToken" (
     CONSTRAINT "verificationToken_pkey" PRIMARY KEY ("identifier","token")
 );
 
+-- CreateTable
+CREATE TABLE "cart" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "userId" UUID,
+    "sessionCartId" TEXT NOT NULL,
+    "items" JSON NOT NULL DEFAULT '[]',
+    "itemsPrice" DECIMAL(12,2) NOT NULL,
+    "totalPrice" DECIMAL(12,2) NOT NULL,
+    "shippingPrice" DECIMAL(12,2) NOT NULL,
+    "taxPrice" DECIMAL(12,2) NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "cart_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "order" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "userId" UUID NOT NULL,
+    "shippingAddress" JSON NOT NULL,
+    "paymentMethod" TEXT NOT NULL,
+    "paymentResult" JSON,
+    "itemsPrice" DECIMAL(12,2) NOT NULL,
+    "shippingPrice" DECIMAL(12,2) NOT NULL,
+    "taxPrice" DECIMAL(12,2) NOT NULL,
+    "totalPrice" DECIMAL(12,2) NOT NULL,
+    "isPaid" BOOLEAN NOT NULL DEFAULT false,
+    "paidAt" TIMESTAMP(6),
+    "isDelivered" BOOLEAN NOT NULL DEFAULT false,
+    "deliveredAt" TIMESTAMP(6),
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "order_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "OrderItem" (
+    "orderId" UUID NOT NULL,
+    "productId" UUID NOT NULL,
+    "quantity" INTEGER NOT NULL,
+    "price" DECIMAL(12,2) NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "image" TEXT NOT NULL,
+
+    CONSTRAINT "orderitems_orderId_productId_pk" PRIMARY KEY ("orderId","productId")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "product_slug_idx" ON "product"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "user_email_idx" ON "user"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_vendorId_key" ON "user"("vendorId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "vendor_userId_key" ON "vendor"("userId");
+
+-- AddForeignKey
+ALTER TABLE "product" ADD CONSTRAINT "product_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "vendor"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "account" ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -102,3 +160,15 @@ ALTER TABLE "vendor" ADD CONSTRAINT "vendor_userId_fkey" FOREIGN KEY ("userId") 
 
 -- AddForeignKey
 ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cart" ADD CONSTRAINT "cart_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "order" ADD CONSTRAINT "order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "product"("id") ON DELETE CASCADE ON UPDATE CASCADE;

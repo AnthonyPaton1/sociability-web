@@ -1,4 +1,5 @@
-import { auth } from "@/auth";
+import { auth } from "@/auth-helpers/server";
+
 import { getMyCart } from "@/lib/actions/cart.actions";
 import { getUserById } from "@/lib/actions/user.actions";
 import { shippingAddress } from "@/types";

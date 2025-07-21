@@ -1,82 +1,120 @@
-// auth.ts
-import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { compareSync } from "bcrypt-ts-edge";
-import { prisma } from "./db/prisma";
+import { prismaAuth } from "./lib/db/prisma-auth";
 import { cookies } from "next/headers";
 import type { User as PrismaUser } from "@prisma/client";
+import type { NextAuthOptions } from "next-auth";
+import type { Session, User } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/sign-in",
     error: "/sign-in",
   },
-  adapter: PrismaAdapter(prisma),
+
+  adapter: PrismaAdapter(prismaAuth),
+
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+
   providers: [
     CredentialsProvider({
+      name: "Credentials",
       credentials: {
-        email: { type: "text" },
-        password: { type: "password" },
+        email: { label: "Email", type: "text", placeholder: "you@example.com" },
+        password: {
+          label: "Password",
+          type: "password",
+          placeholder: "••••••••",
+        },
       },
       async authorize(credentials) {
-        if (!credentials) return null;
+        if (!credentials?.email || !credentials?.password) return null;
+        const email = credentials.email as string;
+        const password = credentials.password as string;
 
-        const user = await prisma.user.findFirst({
-          where: { email: credentials.email as string },
+        const user = await prismaAuth.user.findFirst({
+          where: { email },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            password: true,
+            vendorId: true,
+            Vendor: {
+              select: {
+                businessName: true,
+              },
+            },
+          },
         });
 
-        if (
-          user?.password &&
-          compareSync(credentials.password as string, user.password)
-        ) {
-          return user;
+        if (user?.password && compareSync(password, user.password)) {
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            role: user.role,
+            vendorId: user.vendorId ?? undefined,
+            businessName: user.Vendor?.businessName ?? undefined,
+            type: "credentials",
+          };
         }
 
         return null;
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      // Initial sign in
-      if (user) {
-        token.id = user.id;
-        token.role = (user as PrismaUser).role;
-        token.name = user.name ?? user.email?.split("@")[0];
-      }
 
-      // Manual session update via useSession().update(...)
-      if (trigger === "update" && session?.user?.name) {
-        token.name = session.user.name;
+  callbacks: {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
+      if (user) {
+        const safeUser = user as PrismaUser & {
+          vendorId?: string;
+          businessName?: string;
+        };
+
+        token.id = safeUser.id;
+        token.role = safeUser.role === "vendors" ? "vendor" : safeUser.role;
+
+        token.name = safeUser.name ?? safeUser.email?.split("@")[0];
+        token.vendorId = safeUser.vendorId;
+        token.businessName = safeUser.businessName;
       }
 
       return token;
     },
 
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       session.user.id = token.id as string;
       session.user.role = token.role as string;
       session.user.name = token.name;
+      session.user.vendorId = token.vendorId as string | undefined;
+      session.user.businessName = token.businessName as string | undefined;
+
       return session;
     },
-    async signIn({ user }) {
+
+    async signIn({ user }: { user: User }) {
       try {
         const cookieStore = await cookies();
         const sessionCartId = cookieStore.get("sessionCartId")?.value;
 
         if (sessionCartId) {
-          const sessionCart = await prisma.cart.findFirst({
-            where: { sessionCartId: sessionCartId },
+          const sessionCart = await prismaAuth.cart.findFirst({
+            where: { sessionCartId },
           });
 
           if (sessionCart) {
-            await prisma.cart.deleteMany({ where: { userId: user.id } });
-            await prisma.cart.update({
+            await prismaAuth.cart.deleteMany({ where: { userId: user.id } });
+            await prismaAuth.cart.update({
               where: { id: sessionCart.id },
               data: { userId: user.id },
             });
@@ -86,114 +124,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return true;
       } catch (error) {
         console.error("Cart merge failed:", error);
-        return true;
+        return true; // Let them log in even if cart merge fails
       }
     },
   },
-});
-
-// import NextAuth from "next-auth";
-// import { PrismaAdapter } from "@auth/prisma-adapter";
-// import CredentialsProvider from "next-auth/providers/credentials";
-// import { compareSync } from "bcrypt-ts-edge";
-// import { prisma } from "./db/prisma";
-// import { authConfig } from "./authConfig"; // <--- your separate config with `authorized`
-
-// export const config = {
-//   ...authConfig,
-//   pages: {
-//     signIn: "/sign-in",
-//     error: "/sign-in",
-//   },
-//   session: {
-//     strategy: "jwt" as const,
-//     maxAge: 30 * 24 * 60 * 60,
-//   },
-//   adapter: PrismaAdapter(prisma),
-//   providers: [
-//     CredentialsProvider({
-//       credentials: {
-//         email: { type: "email" },
-//         password: { type: "password" },
-//       },
-//       async authorize(credentials) {
-//         if (!credentials) return null;
-
-//         const user = await prisma.user.findFirst({
-//           where: { email: credentials.email as string },
-//         });
-
-//         if (user?.password) {
-//           const isMatch = compareSync(
-//             credentials.password as string,
-//             user.password
-//           );
-
-//           if (isMatch) {
-//             return {
-//               id: user.id,
-//               name: user.name,
-//               email: user.email,
-//               role: user.role,
-//             };
-//           }
-//         }
-//         //if no user or no password match return null
-//         return null;
-//       },
-//     }),
-//   ],
-//   callbacks: {
-//     ...authConfig.callbacks,
-//     async session({ session, user, trigger, token }: any) {
-//       session.user.id = token.sub;
-//       session.user.role = token.role;
-//       session.user.name = token.name;
-
-//       if (trigger === "update") {
-//         session.user.name = user.name;
-//       }
-
-//       return session;
-//     },
-//     async jwt({ token, user }: any) {
-//       if (user) {
-//         token.id = user.id;
-//         token.role = user.role;
-
-//         if (user.name === "NO_NAME") {
-//           token.name = user.email!.split("@")[0];
-
-//           await prisma.user.update({
-//             where: { id: user.id },
-//             data: { name: token.name },
-//           });
-//         }
-//         if (trigger === "signIn" || trigger === "signUp") {
-//           const cookiesObject = await cookies();
-//           const sessionCartId = cookiesObject("sessioncartId")?.value;
-
-//           if (sessionCartId) {
-//             const sessionCart = await prisma.cart.findFirst({
-//               whier: { sessioncartId },
-//             });
-//             if (sessioncart) {
-//               await prisma.cart.deleteMany({
-//                 where: { userId: user.id },
-//               });
-//               //assign new cart
-//               await prisma.cart.update({
-//                 where: { id: sessionCart.id },
-//                 data: { userId: user.id },
-//               });
-//             }
-//           }
-//         }
-//       }
-
-//       return token;
-//     },
-//   },
-// };
-
-// export const { handlers, auth, signIn, signOut } = NextAuth(config);
+};
