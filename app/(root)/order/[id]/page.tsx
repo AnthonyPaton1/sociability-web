@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import { getOrderById } from "@/lib/actions/order.actions";
 import { shippingAddress } from "@/types";
 import OrderDetailsTable from "./order-details-table";
+import { auth } from "@/auth-helpers/server";
 
 export const metadata: Metadata = {
   title: "Order Details",
@@ -22,6 +23,7 @@ const OrderDetailsPage = async (props: { params: Promise<{ id: string }> }) => {
       price: Number(item.price),
     })),
   };
+  const session = await auth();
 
   return (
     <div>
@@ -44,6 +46,7 @@ const OrderDetailsPage = async (props: { params: Promise<{ id: string }> }) => {
           paymentMethod: order.paymentMethod,
         }}
         paypalClientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "sb"}
+        isVendor={session?.user?.role === "vendor" || false}
       />
     </div>
   );

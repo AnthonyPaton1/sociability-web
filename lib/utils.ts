@@ -20,7 +20,7 @@ export function formatNumberWithDecimal(num: number): string {
 
 //Format errors
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function formatError(error: any) {
+export function formatError(error: any) {
   if (error.name === "ZodError") {
     //Handle Zod Error
     const fieldErrors = Object.keys(error.errors).map(
@@ -66,6 +66,13 @@ export function formatCurrency(amount: number | string | null) {
   } else if (typeof amount === "string") {
     return CURRENCY_FORMATTER.format(Number(amount));
   } else "NAN";
+}
+
+//format number
+const NUMBER_FORMATTER = new Intl.NumberFormat("en-UK");
+
+export function formatNumber(number: number) {
+  return NUMBER_FORMATTER.format(number);
 }
 
 //shorten the UUid

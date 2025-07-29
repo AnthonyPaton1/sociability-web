@@ -1,7 +1,5 @@
-import { Metadata } from "next";
-import { getMyOrders } from "@/lib/actions/order.actions";
-import { formatCurrency, formatDateTime, formatId } from "@/lib/utils";
-import Link from "next/link";
+import Pagination from "@/components/shared/pagination";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -10,22 +8,33 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Pagination from "@/components/shared/pagination";
+import { deleteOrder, getAllOrders } from "@/lib/actions/order.actions";
+import { requireVendorAccess } from "@/lib/auth/requireVendorAccess";
+import { formatCurrency, formatDateTime, formatId } from "@/lib/utils";
+import DeleteDialog from "@/components/shared/delete-dialog";
+import { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "My Orders",
+  title: "vendor Orders",
 };
 
-interface OrdersPageProps {
-  searchParams?: {
-    page?: string;
-  };
-}
+const VendorOrdersPage = async ({
+  params,
+  searchParams,
+}: {
+  params: { vendorId: string };
+  searchParams: { page?: string };
+}) => {
+  const vendorId = params.vendorId;
+  const page = searchParams?.page || "1";
 
-const OrdersPage = async ({ searchParams }: OrdersPageProps) => {
-  const page = Number(searchParams?.page) || 1;
+  await requireVendorAccess(vendorId);
 
-  const orders = await getMyOrders({ page });
+  const orders = await getAllOrders({
+    page: Number(page),
+    limit: 2,
+  });
 
   return (
     <div className="space-y-2">
@@ -61,18 +70,19 @@ const OrdersPage = async ({ searchParams }: OrdersPageProps) => {
                     : "Not Delivered"}
                 </TableCell>
                 <TableCell>
-                  <Link href={`/order/${order.id}`}>
-                    <span className="px-2">Details</span>
-                  </Link>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/order/${order.id}`}>Details</Link>
+                  </Button>
+                  <DeleteDialog id={order.id} action={deleteOrder} />
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-        {orders.totalPages > 1 && (
+        {orders.totalpages > 1 && (
           <Pagination
             page={Number(page) || 1}
-            totalPages={orders?.totalPages}
+            totalPages={orders?.totalpages}
           />
         )}
       </div>
@@ -80,4 +90,4 @@ const OrdersPage = async ({ searchParams }: OrdersPageProps) => {
   );
 };
 
-export default OrdersPage;
+export default VendorOrdersPage;

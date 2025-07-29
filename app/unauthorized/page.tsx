@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Metadata } from "next";
 import { APP_NAME } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
