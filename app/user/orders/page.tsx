@@ -17,11 +17,14 @@ export const metadata: Metadata = {
 };
 
 const OrdersPage = async ({
+  params,
   searchParams,
 }: {
-  params: {};
+  params: Promise<{}> | {};
   searchParams?: Promise<{ page?: string }> | { page?: string };
 }) => {
+  // Handle both Promise and non-Promise for params and searchParams
+  const resolvedParams = params instanceof Promise ? await params : params;
   const resolvedSearchParams =
     searchParams instanceof Promise ? await searchParams : searchParams;
 
