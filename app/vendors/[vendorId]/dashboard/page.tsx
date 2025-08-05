@@ -20,13 +20,25 @@ export const metadata: Metadata = {
   title: "Vendor Dashboard",
 };
 
+// export default async function DashboardPage({
+//   params,
+// }: {
+//   params: { vendorId: string };
+// }) {
+//   const user = await requireVendorAccess(params.vendorId);
+
+//   const summary = await getOrderSummary();
+
+//   console.log("Sales Data:", summary.salesData);
 export default async function DashboardPage({
   params,
 }: {
-  params: { vendorId: string };
+  params: Promise<{ vendorId: string }>;
 }) {
-  const user = await requireVendorAccess(params.vendorId);
+  // Await the params promise to get vendorId
+  const { vendorId } = await params;
 
+  const user = await requireVendorAccess(vendorId);
   const summary = await getOrderSummary();
 
   console.log("Sales Data:", summary.salesData);

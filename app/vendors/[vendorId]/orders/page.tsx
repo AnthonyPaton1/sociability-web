@@ -23,11 +23,14 @@ const VendorOrdersPage = async ({
   params,
   searchParams,
 }: {
-  params: { vendorId: string };
-  searchParams: { page?: string };
+  params: Promise<{ vendorId: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) => {
-  const vendorId = params.vendorId;
-  const page = searchParams?.page || "1";
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+
+  const vendorId = resolvedParams.vendorId;
+  const page = resolvedSearchParams?.page || "1";
 
   await requireVendorAccess(vendorId);
 
