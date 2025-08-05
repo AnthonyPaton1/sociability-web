@@ -16,18 +16,19 @@ export const metadata: Metadata = {
   title: "My Orders",
 };
 
-// interface OrdersPageProps {
-//   searchParams?: {
-//     page?: string;
-//   };
-// }
-
+// ✅ Fix: match Next.js PageProps typing
 const OrdersPage = async ({
   searchParams,
 }: {
-  searchParams?: { page?: string };
+  params: {};
+  searchParams?: Record<string, string | string[] | undefined>;
 }) => {
-  const page = Number(searchParams?.page) || 1;
+  const page =
+    Number(
+      Array.isArray(searchParams?.page)
+        ? searchParams?.page[0]
+        : searchParams?.page
+    ) || 1;
 
   const orders = await getMyOrders({ page });
 
@@ -74,10 +75,7 @@ const OrdersPage = async ({
           </TableBody>
         </Table>
         {orders.totalPages > 1 && (
-          <Pagination
-            page={Number(page) || 1}
-            totalPages={orders?.totalPages}
-          />
+          <Pagination page={page} totalPages={orders.totalPages} />
         )}
       </div>
     </div>
