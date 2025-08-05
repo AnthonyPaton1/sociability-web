@@ -19,10 +19,13 @@ export const metadata: Metadata = {
 const OrdersPage = async ({
   searchParams,
 }: {
-  params: {}; // even if unused
-  searchParams?: { page?: string };
+  params: {};
+  searchParams?: Promise<{ page?: string }> | { page?: string };
 }) => {
-  const page = Number(searchParams?.page) || 1;
+  const resolvedSearchParams =
+    searchParams instanceof Promise ? await searchParams : searchParams;
+
+  const page = Number(resolvedSearchParams?.page) || 1;
   const orders = await getMyOrders({ page });
 
   return (
