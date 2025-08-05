@@ -16,19 +16,15 @@ export const metadata: Metadata = {
   title: "My Orders",
 };
 
-const OrdersPage = async ({
-  params,
-  searchParams,
-}: {
-  params: Promise<{}> | {};
-  searchParams?: Promise<{ page?: string }> | { page?: string };
-}) => {
-  // Handle both Promise and non-Promise for params and searchParams
-  const resolvedParams = params instanceof Promise ? await params : params;
-  const resolvedSearchParams =
-    searchParams instanceof Promise ? await searchParams : searchParams;
+interface OrdersPageProps {
+  searchParams?: {
+    page?: string;
+  };
+}
 
-  const page = Number(resolvedSearchParams?.page) || 1;
+const OrdersPage = async ({ searchParams }: OrdersPageProps) => {
+  const page = Number(searchParams?.page) || 1;
+
   const orders = await getMyOrders({ page });
 
   return (
