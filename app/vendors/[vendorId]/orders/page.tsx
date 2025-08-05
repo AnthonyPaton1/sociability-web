@@ -36,7 +36,7 @@ const VendorOrdersPage = async ({
 
   const orders = await getAllOrders({
     page: Number(page),
-    limit: 2,
+    limit: 15,
   });
 
   return (

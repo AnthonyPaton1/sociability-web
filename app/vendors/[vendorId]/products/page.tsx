@@ -1,25 +1,111 @@
-import { auth } from "@/auth-helpers/server";
-import { requireVendorAccess } from "@/lib/auth/requireVendorAccess";
 import { Metadata } from "next";
+import Link from "next/link";
+import { getAllProducts, DeleteProduct } from "@/lib/actions/product.actions";
+import { formatCurrency, formatId } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Pagination from "@/components/shared/pagination";
+import DeleteDialog from "@/components/shared/delete-dialog";
 
 export const metadata: Metadata = {
   title: "Your Products",
 };
 
-const VendorProductsPage = async ({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ vendorId: string }>;
-  searchParams: Promise<{ page?: string }>;
+const VendorProductsPage = async (props: {
+  searchParams: Promise<{
+    page: string;
+    query: string;
+    category: string;
+  }>;
 }) => {
-  const { vendorId } = await params;
-  const resolvedSearchParams = await searchParams;
-  const page = resolvedSearchParams?.page || "1";
+  const searchParams = await props.searchParams;
 
-  await requireVendorAccess(vendorId);
+  const page = Number(searchParams.page) || 1;
+  const searchText = searchParams.query || "";
+  const category = searchParams.category || "";
 
-  return <>Products</>;
+  const products = await getAllProducts({
+    query: searchText,
+    page,
+    category,
+  });
+  const safeProducts = products.data.map((product) => ({
+    ...product,
+    price: product.price.toNumber(),
+    rating: product.rating.toNumber(),
+  }));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex-between">
+        <h1 className="h2-bold">Products</h1>
+        <Button asChild variant="default">
+          <Link href="/vendor/products/create">Create Product</Link>
+        </Button>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>NAME</TableHead>
+            <TableHead className="text-right">PRICE</TableHead>
+            <TableHead>CATEGORY</TableHead>
+            <TableHead>STOCK</TableHead>
+            <TableHead>RATING</TableHead>
+            <TableHead className="w-[100px]">ACTIONS</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {safeProducts.map((product) => (
+            <TableRow key={product.id}>
+              <TableCell>{formatId(product.id)}</TableCell>
+              <TableCell>{product.name}</TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(product.price)}
+              </TableCell>
+              <TableCell>{product.category}</TableCell>
+              <TableCell>{product.stock}</TableCell>
+              <TableCell>{product.rating}</TableCell>
+              <TableCell className="flex gap-1">
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/vendor/products/${product.id}`}>Edit</Link>
+                </Button>
+                <DeleteDialog id={product.id} action={DeleteProduct} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {products?.totalPages && products.totalPages > 1 && (
+        <Pagination page={page} totalPages={products.totalPages} />
+      )}
+    </div>
+  );
 };
-
 export default VendorProductsPage;
+
+// const VendorProductsPage = async ({
+//   params,
+//   searchParams,
+// }: {
+//   params: Promise<{ vendorId: string }>;
+//   searchParams: Promise<{ page?: string }>;
+// }) => {
+//   const { vendorId } = await params;
+//   const resolvedSearchParams = await searchParams;
+//   const page = resolvedSearchParams?.page || "1";
+
+//   await requireVendorAccess(vendorId);
+
+//   return <>Products</>;
+// };
+
+// export default VendorProductsPage;

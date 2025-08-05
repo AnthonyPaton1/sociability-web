@@ -65,11 +65,7 @@ const OrderDetailsTable = ({
   };
 
   const handleCreatePayPalOrder = async () => {
-    console.log("🛠 Creating PayPal order...");
-
     const res = await createPayPalOrder(order.id);
-
-    console.log("✅ PayPal order response:", res);
 
     if (!res.success) {
       toast.error(res.message);

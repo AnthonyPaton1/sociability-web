@@ -59,13 +59,14 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat("en-UK", {
   minimumFractionDigits: 2,
 });
 
-//format currency using the formatter above
 export function formatCurrency(amount: number | string | null) {
   if (typeof amount === "number") {
     return CURRENCY_FORMATTER.format(amount);
   } else if (typeof amount === "string") {
     return CURRENCY_FORMATTER.format(Number(amount));
-  } else "NAN";
+  } else {
+    return "NAN";
+  }
 }
 
 //format number
