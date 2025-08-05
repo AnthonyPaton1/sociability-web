@@ -16,13 +16,13 @@ export const metadata: Metadata = {
   title: "My Orders",
 };
 
-// ✅ Fix: match Next.js PageProps typing
-const OrdersPage = async ({
-  searchParams,
-}: {
-  params: {};
-  searchParams?: Record<string, string | string[] | undefined>;
-}) => {
+interface OrdersPageProps {
+  searchParams?: {
+    page?: string;
+  };
+}
+
+const OrdersPage = async ({ searchParams }: OrdersPageProps) => {
   const page =
     Number(
       Array.isArray(searchParams?.page)
