@@ -33,3 +33,24 @@ export const DEFAULT_PAYMENT_METHOD =
   process.env.DEFAULT_PAYMENT_METHOD || "PayPal";
 
 export const PAGE_SIZE = Number(process.env.PAGE_SIZE) || 12;
+
+export const productDefaultvalues = {
+  id: "",
+  name: "",
+  slug: "",
+  category: "",
+  ageRange: "",
+  gameType: "",
+  material: "",
+  certifications: [],
+  images: [],
+  brand: "",
+  description: "",
+  price: 0, // ✅ number
+  stock: 0, // ✅ number
+  rating: 0, // ✅ number
+  numReviews: 0, // ✅ number
+  isFeatured: false, // ✅ boolean
+  banner: null,
+  vendorId: "", // ✅ if required
+};

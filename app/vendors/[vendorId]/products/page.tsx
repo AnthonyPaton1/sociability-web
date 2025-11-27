@@ -13,18 +13,23 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/shared/pagination";
 import DeleteDialog from "@/components/shared/delete-dialog";
+import { requireVendorAccess } from "@/lib/auth/requireVendorAccess";
+
 
 export const metadata: Metadata = {
   title: "Your Products",
 };
 
 const VendorProductsPage = async (props: {
+  params: Promise<{ vendorId: string }>;
   searchParams: Promise<{
     page: string;
     query: string;
     category: string;
   }>;
 }) => {
+  const { vendorId } = await props.params;
+  await requireVendorAccess(vendorId);
   const searchParams = await props.searchParams;
 
   const page = Number(searchParams.page) || 1;
@@ -35,6 +40,7 @@ const VendorProductsPage = async (props: {
     query: searchText,
     page,
     category,
+    vendorId,
   });
   const safeProducts = products.data.map((product) => ({
     ...product,
@@ -47,7 +53,9 @@ const VendorProductsPage = async (props: {
       <div className="flex-between">
         <h1 className="h2-bold">Products</h1>
         <Button asChild variant="default">
-          <Link href="/vendor/products/create">Create Product</Link>
+          <Link href={`/vendors/${vendorId}/products/create`}>
+            Create Product
+          </Link>
         </Button>
       </div>
 
@@ -76,7 +84,7 @@ const VendorProductsPage = async (props: {
               <TableCell>{product.rating}</TableCell>
               <TableCell className="flex gap-1">
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/vendor/products/${product.id}`}>Edit</Link>
+                  <Link href={`/vendors/${vendorId}/products/${product.id}/edit`}>Edit</Link>
                 </Button>
                 <DeleteDialog id={product.id} action={DeleteProduct} />
               </TableCell>
@@ -84,28 +92,10 @@ const VendorProductsPage = async (props: {
           ))}
         </TableBody>
       </Table>
-      {products?.totalPages && products.totalPages > 1 && (
+      {products.totalPages > 1 && (
         <Pagination page={page} totalPages={products.totalPages} />
       )}
     </div>
   );
 };
 export default VendorProductsPage;
-
-// const VendorProductsPage = async ({
-//   params,
-//   searchParams,
-// }: {
-//   params: Promise<{ vendorId: string }>;
-//   searchParams: Promise<{ page?: string }>;
-// }) => {
-//   const { vendorId } = await params;
-//   const resolvedSearchParams = await searchParams;
-//   const page = resolvedSearchParams?.page || "1";
-
-//   await requireVendorAccess(vendorId);
-
-//   return <>Products</>;
-// };
-
-// export default VendorProductsPage;

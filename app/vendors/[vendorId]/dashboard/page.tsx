@@ -16,32 +16,23 @@ import {
 import Link from "next/link";
 import Charts from "./charts";
 
+
 export const metadata: Metadata = {
   title: "Vendor Dashboard",
 };
 
-// export default async function DashboardPage({
-//   params,
-// }: {
-//   params: { vendorId: string };
-// }) {
-//   const user = await requireVendorAccess(params.vendorId);
 
-//   const summary = await getOrderSummary();
-
-//   console.log("Sales Data:", summary.salesData);
 export default async function DashboardPage({
   params,
 }: {
   params: Promise<{ vendorId: string }>;
 }) {
-  // Await the params promise to get vendorId
   const { vendorId } = await params;
+  await requireVendorAccess(vendorId);
+  
+  const summary = await getOrderSummary(vendorId); 
 
-  const user = await requireVendorAccess(vendorId);
-  const summary = await getOrderSummary();
-
-  console.log("Sales Data:", summary.salesData);
+  console.log("Vendor Sales Data:", summary.salesData);
 
   return (
     <div>

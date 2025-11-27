@@ -10,16 +10,28 @@ export const currency = z.coerce
 
 // Schema for inserting products
 export const insertProductSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  slug: z.string().min(3, "Slug must be at least 3 characters"),
-  category: z.string().min(3, "Category must be at least 3 characters"),
-  brand: z.string().min(3, "Brand must be at least 3 characters"),
-  description: z.string().min(3, "Description must be at least 3 characters"),
-  stock: z.coerce.number(),
-  images: z.array(z.string()).min(1, "product must have at least 1 image"),
-  isFeatured: z.boolean(),
-  banner: z.string().nullable(),
-  price: currency,
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  category: z.string().min(1),
+  ageRange: z.string().optional(),
+  gameType: z.string().optional(),
+  material: z.string().optional(),
+  certifications: z.array(z.string()).optional(),
+  brand: z.string(),
+  description: z.string(),
+  price: z.coerce.number().nonnegative(),
+  stock: z.coerce.number().int().nonnegative(),
+  rating: z.coerce.number().optional(),
+  numReviews: z.coerce.number().optional(),
+  isFeatured: z.coerce.boolean(),
+   vendorId: z.string().uuid("Valid vendor ID is required"),
+  //banner: z.string().nullable().optional(),
+  images: z.array(z.string()).min(1, "Product must have at least one image"),
+});
+
+//schema for updating a product
+export const updateProductSchema = insertProductSchema.extend({
+  id: z.string().uuid(),
 });
 
 //Schema for signing users in

@@ -286,34 +286,106 @@ type SalesDataType = {
   totalSales: number;
 }[];
 
-export async function getOrderSummary() {
-  // Get counts for each resource
-  const ordersCount = await prisma.order.count();
-  const productCount = await prisma.product.count();
-  const usersCount = await prisma.user.count();
+export async function getOrderSummary(vendorId?: string) {
+  // Build where clause for vendor-specific filtering
+  // Orders are vendor-specific if they contain items from that vendor's products
+  const orderWhere = vendorId
+    ? {
+        orderItems: {
+          some: {
+            product: {
+              vendorId,
+            },
+          },
+        },
+      }
+    : {};
 
-  // Calculate the total sales
-  const totalSales = await prisma.order.aggregate({
-    _sum: { totalPrice: true },
+  // Get counts for each resource
+  const ordersCount = await prisma.order.count({
+    where: orderWhere,
   });
 
+  const productCount = await prisma.product.count({
+    where: vendorId ? { vendorId } : {},
+  });
+
+  const usersCount = await prisma.user.count();
+
+  // Calculate the total sales for this vendor
+  let totalSales;
+  if (vendorId) {
+    // Sum up orderItems prices where product belongs to vendor
+    const vendorOrderItems = await prisma.orderItem.aggregate({
+      where: {
+        product: {
+          vendorId,
+        },
+        order: {
+          isPaid: true, // Only count paid orders
+        },
+      },
+      _sum: {
+        price: true,
+      },
+    });
+    
+    totalSales = {
+      _sum: {
+        totalPrice: vendorOrderItems._sum.price || 0,
+      },
+    };
+  } else {
+    // Admin sees all sales
+    totalSales = await prisma.order.aggregate({
+      _sum: { totalPrice: true },
+    });
+  }
+
   // Get monthly sales
-  const salesDataRaw = await prisma.$queryRaw<
-    Array<{ month: string; totalSales: Prisma.Decimal }>
-  >`SELECT 
-      to_char("createdAt", 'MM/YY') as "month", 
-      sum("totalPrice") as "totalSales" 
-    FROM "order" 
-    GROUP BY to_char("createdAt", 'MM/YY') 
-    ORDER BY to_char("createdAt", 'MM/YY')`;
+  let salesDataRaw;
+  if (vendorId) {
+    // Vendor-specific monthly sales from their order items
+    salesDataRaw = await prisma.$queryRaw
+      Array<{ month: string, totalSales: Prisma.Decimal }>
+    `
+      SELECT 
+        to_char(o."createdAt", 'MM/YY') as "month", 
+        sum(oi."price" * oi."quantity") as "totalSales" 
+      FROM "OrderItem" oi
+      JOIN "Order" o ON oi."orderId" = o."id"
+      JOIN "Product" p ON oi."productId" = p."id"
+      WHERE p."vendorId" = ${vendorId}
+        AND o."isPaid" = true
+      GROUP BY to_char(o."createdAt", 'MM/YY') 
+      ORDER BY to_char(o."createdAt", 'MM/YY')
+    `;
+  } else {
+    // Admin sees all sales
+    salesDataRaw = await prisma.$queryRaw
+      Array<{ month: string, totalSales: Prisma.Decimal }>
+    `
+      SELECT 
+        to_char("createdAt", 'MM/YY') as "month", 
+        sum("totalPrice") as "totalSales" 
+      FROM "Order" 
+      WHERE "isPaid" = true
+      GROUP BY to_char("createdAt", 'MM/YY') 
+      ORDER BY to_char("createdAt", 'MM/YY')
+    `;
+  }
 
-  const salesData: SalesDataType = salesDataRaw.map((entry) => ({
-    month: entry.month,
-    totalSales: Number(entry.totalSales),
-  }));
+  // Add safety check for empty results
+  const salesData: SalesDataType = Array.isArray(salesDataRaw)
+    ? salesDataRaw.map((entry) => ({
+        month: entry.month,
+        totalSales: Number(entry.totalSales),
+      }))
+    : [];
 
-  // Get latest sales
+  // Get latest sales for this vendor
   const latestSales = await prisma.order.findMany({
+    where: orderWhere,
     orderBy: { createdAt: "desc" },
     include: {
       user: { select: { name: true } },

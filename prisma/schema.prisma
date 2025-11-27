@@ -25,6 +25,23 @@ model Product {
   numReviews     Int         @default(0)
   isFeatured     Boolean     @default(false)
   banner         String?
+    // Category system
+  mainCategory    String?  // Clothing, Toys, Arts, Home, Care, Equipment, Gifts
+  subCategory     String?  // For future subcategory filtering
+  
+  // Clothing specific
+  clothingType    String?  // Tops, Bottoms, Outerwear, Footwear, Accessories
+  size            String?  // XS, S, M, L, XL, XXL, XXXL or age ranges
+  
+  // Toys specific  
+  toyType         String?  // Educational, Sensory, Board Games, Puzzles
+  
+  // Arts specific
+  artType         String?  // Paintings, Sculptures, Textiles, Jewelry
+  medium          String?  // Oil, Watercolor, Clay, Fabric, Wood
+  
+  // Universal accessibility features
+  features        String[] @default([])  // Easy-fasten, Sensory-friendly,
   createdAt      DateTime    @default(now()) @db.Timestamp(6)
   orderItems     OrderItem[]
   vendorId       String?     @db.Uuid
@@ -157,4 +174,17 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([orderId, productId], map: "orderitems_orderId_productId_pk")
+}
+
+model Banner {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  image       String
+  link        String?  // Optional link when clicked
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)  // For sorting banners
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt @db.Timestamp(6)
+
+  @@map("banner")
 }

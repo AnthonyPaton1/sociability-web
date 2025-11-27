@@ -123,7 +123,7 @@ export async function addItemToCart(data: CartItem) {
 export async function getMyCart() {
   // Check for cart cookie
   const sessionCartId = (await cookies()).get("sessionCartId")?.value;
-  if (!sessionCartId) throw new Error("Cart session not found");
+ if (!sessionCartId) return undefined;
 
   // Get session and user ID
   const session = await auth();
@@ -135,6 +135,7 @@ export async function getMyCart() {
   });
 
   if (!cart) return undefined;
+  
 
   // Convert decimals and return
   return convertToPlainObject({

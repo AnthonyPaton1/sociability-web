@@ -1,30 +1,30 @@
-import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import Link from "next/link";
 import ProductPrice from "./product-price";
-import { Product } from "@/types";
+import StarRating from "@/components/shared/star-rating";
 
-const ProductCard = ({ product }: { product: Product }) => {
+
+export default function ProductCard({ product }: { product: Product }) {
   return (
     <Card className="w-full max-w-sm">
-      <CardHeader className="p-0 items-center">
-        <Link href={`/product/${product.slug}`}>
+      <Link href={`/product/${product.slug}`}>
+        <div className="relative w-full aspect-square overflow-hidden">
           <Image
-            src={product.images[0]}
+            src={product.images?.[0] || "/placeholder.png"}
             alt={product.name}
-            height={300}
-            width={300}
-            priority={true}
+            fill
+            className="object-cover"
           />
-        </Link>
-      </CardHeader>
+        </div>
+      </Link>
       <CardContent className="p-4 grid gap-4">
-        <div className="text-xs">{product.brand}</div>
+        <div className="text-xs text-muted-foreground">{product.brand}</div>
         <Link href={`/product/${product.slug}`}>
           <h2 className="text-sm font-medium">{product.name}</h2>
         </Link>
-        <div className="flex-between gap-4">
-          <p>{product.rating} Stars</p>
+        <div className="flex items-center justify-between gap-4">
+          <StarRating rating={Number(product.rating)} showNumber={true} size="sm" />
           {product.stock > 0 ? (
             <ProductPrice value={Number(product.price)} />
           ) : (
@@ -34,6 +34,4 @@ const ProductCard = ({ product }: { product: Product }) => {
       </CardContent>
     </Card>
   );
-};
-
-export default ProductCard;
+}

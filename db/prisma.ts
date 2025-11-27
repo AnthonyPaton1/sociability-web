@@ -8,11 +8,13 @@ export const prisma = new PrismaClient().$extends({
   result: {
     product: {
       priceString: {
+        needs: { price: true }, // ← Add this
         compute(product) {
           return product.price.toString();
         },
       },
       ratingString: {
+        needs: { rating: true }, // ← Add this
         compute(product) {
           return product.rating.toString();
         },
@@ -72,6 +74,7 @@ export const prisma = new PrismaClient().$extends({
     },
     orderItem: {
       price: {
+        needs: { price: true }, // ← Add this too
         compute(cart) {
           return cart.price.toString();
         },
