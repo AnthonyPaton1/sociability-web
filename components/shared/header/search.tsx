@@ -3,6 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent  } from "@/components/ui/select";
 import { getAllCategories } from "@/lib/actions/product.actions";
 import { SearchIcon } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Search Page",
+};
 
 const SearchBar = async () => {
 
